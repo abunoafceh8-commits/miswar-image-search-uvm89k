@@ -104,16 +104,34 @@ export default async function handler(req, res) {
   const seen = new Set();
   const unique = results.filter(r => { const k = r.url; if (seen.has(k)) return false; seen.add(k); return true; });
 
+  // Format images to match original API structure
+  const images = unique.slice(0, limit).map(item => ({
+    id: item.id,
+    url: item.url,
+    thumb: item.thumbnail,
+    title: item.title,
+    source: item.source_label,
+    width: item.width,
+    height: item.height,
+    query: q,
+    status: 'found'
+  }));
+
   return res.json({
-    items: unique.slice(0, limit),
-    total: unique.length,
-    q,
-    qAlt: qAlt || '',
-    engines: Object.keys(cursors).length > 0 ? Object.keys(cursors) : ['openverse', 'wikimedia'],
+    images,
     cursors: {
-      openverse: (cursors.openverse || 1) + 1,
-      wikimedia: (cursors.wikimedia || 0) + perSource
+      wikimedia: (cursors.wikimedia || 0) + perSource,
+      openverse: (cursors.openverse || 1) + 1
     },
-    has_more: unique.length >= limit
+    counts: {
+      wikimedia: results.filter(r => r.source === 'wikimedia').length,
+      openverse: results.filter(r => r.source === 'openverse').length,
+      total: unique.length
+    },
+    hasMore: unique.length >= limit,
+    ms: Date.now(),
+    topTerms: [q],
+    rejected: 0,
+    safeApplied: safe
   });
 }
