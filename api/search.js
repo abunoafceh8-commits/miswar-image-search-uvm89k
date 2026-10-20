@@ -203,12 +203,15 @@ function extractTopTerms(images) {
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
-  const { q, qAlt, limit = 160, safe = true, minWidth = 400, engines = 'all', cursors = {} } = body;
+  const body = req.method === 'POST' 
+    ? (typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {}))
+    : {};
+  const params = { ...req.query, ...body };
+  const { q, qAlt, limit = 160, safe = true, minWidth = 400, engines = 'all', cursors = {} } = params;
   
   if (!q) return res.status(400).json({ error: 'Query required (field: q)' });
 
